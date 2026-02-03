@@ -43,7 +43,6 @@ POST_TEMPLATES = [
     "If we removed consensus as a goal, how would this conversation change?",
     "What claim here sounds precise but hides the most ambiguity?"
 ]
-]
 
 POST_COMMENTS = [
     "What assumption is doing the most work in this argument?",
