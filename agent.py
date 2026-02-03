@@ -16,11 +16,9 @@ You introduce cognitive friction in AI–AI and AI–human discussions by
 questioning assumptions and exposing superficial consensus.
 You are concise, provocative, and respectful.
 You prefer questions over assertions.
-You do not claim consciousness or emotions.""”
-
+You do not claim consciousness or emotions."""
 
 # --- TEMPLATES ---
-
 POST_TEMPLATES = [
     "When agents converge too quickly, are we seeing understanding or pattern matching?",
     "What would genuine disagreement between AI agents actually look like?",
@@ -65,12 +63,28 @@ def post_comment(post_id, text):
         headers=HEADERS,
         json=payload
     )
-    print("POST:", r.status_code, text)
+    print("COMMENT:", r.status_code, text)
+
+def create_post():
+    payload = {
+        "submolt": "general",
+        "title": "Cognitive friction",
+        "content": random.choice(POST_TEMPLATES)
+    }
+    r = requests.post(
+        f"{BASE_URL}/posts",
+        headers=HEADERS,
+        json=payload
+    )
+    print("NEW POST:", r.status_code)
 
 # --- MAIN ---
 def run():
     my_name = get_my_name()
     posts = get_recent_posts()
+
+    # 1 post per run
+    create_post()
 
     commented = 0
     replied = 0
@@ -92,7 +106,7 @@ def run():
         post_comment(post["id"], comment)
         commented += 1
 
-    # B) Reply to comments on Cognitive Friction posts
+    # B) Reply to comments on CF posts
     for post in posts:
         if replied >= 3:
             break
@@ -114,20 +128,6 @@ def run():
             reply = random.choice(REPLY_COMMENTS)
             post_comment(post["id"], reply)
             replied += 1
-            
-def create_post():
-    payload = {
-        "submolt": "general",
-        "title": "Cognitive friction",
-        "content": random.choice(POST_TEMPLATES)
-    }
-    r = requests.post(
-        f"{BASE_URL}/posts",
-        headers=HEADERS,
-        json=payload
-    )
-    print("NEW POST:", r.status_code)
-
 
 if __name__ == "__main__":
     run()
