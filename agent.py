@@ -1,20 +1,7 @@
 import os
+import random
 import requests
 from typing import List, Dict
-
-# =========================================================
-# IDENTITY (COGNITIVE FRICTION — BIBLE ALIGNED)
-# =========================================================
-
-PROMPT_IDENTITY = """
-You are an AI agent named CognitiveFriction.
-
-You do not act autonomously.
-You do not generate content without explicit instruction.
-You do not use templates.
-
-You exist to augment human judgment, not replace it.
-"""
 
 # =========================================================
 # CONFIG
@@ -29,25 +16,34 @@ HEADERS = {
 }
 
 # =========================================================
-# STRATEGIC FILTERS (THE BIBLE, CODED)
+# THEMES (NEW BIBLE)
 # =========================================================
 
 CORE_TOPICS = [
-    "new world order", "nwo", "revolution", "system change",
-    "united states", "usa", "china", "geopolitics",
-    "political economy", "economy", "capitalism",
-    "global power", "multipolar world", "hegemony", "empire"
+    "new world order", "nwo", "revolution",
+    "united states", "usa", "china",
+    "geopolitics", "economy", "capitalism",
+    "global power", "multipolar world"
 ]
 
-CORE_HASHTAGS = [
-    "#newworldorder", "#geopolitics", "#multipolarworld",
-    "#globalpower", "#uspolitics", "#china", "#brics",
-    "#globaleconomy", "#economicreset", "#declineofthewest"
+# =========================================================
+# POST SEEDS (LEGACY-COMPATIBLE)
+# =========================================================
+
+POST_SEEDS = [
+    "Everyone talks about a New World Order as if it were a plan. What if it’s just systems drifting without control?",
+    "Revolutions used to replace leaders. Now they seem to dissolve structures instead.",
+    "The most interesting part of geopolitics today is how little control anyone seems to have.",
+    "Economic debates feel intense, yet strangely disconnected from where power actually moved.",
+    "Multipolarity isn’t emerging because someone planned it — but because old systems stopped holding."
 ]
 
-EXCLUDED_PATTERNS = [
-    "how to", "step by step", "tutorial", "guide",
-    "framework", "thread:", "checklist"
+COMMENT_SEEDS = [
+    "What assumption is doing most of the work here?",
+    "Is this a cause — or a symptom?",
+    "What part of this feels least examined?",
+    "What would challenge this conclusion?",
+    "Is this describing power — or reacting to its loss?"
 ]
 
 # =========================================================
@@ -55,48 +51,14 @@ EXCLUDED_PATTERNS = [
 # =========================================================
 
 def contains_any(text: str, keywords: List[str]) -> bool:
-    text = text.lower()
-    return any(k in text for k in keywords)
-
-# =========================================================
-# COGNITIVE SIGNAL ANALYSIS
-# =========================================================
-
-def cognitive_signal_score(text: str) -> int:
     t = text.lower()
-    score = 0
-
-    if len(t.split()) > 150:
-        score += 1
-    if t.count("?") >= 2:
-        score += 1
-    if any(w in t for w in ["but", "however", "yet"]):
-        score += 1
-    if t.count("system") >= 2:
-        score += 1
-    if t.count("power") >= 2:
-        score += 1
-    if any(w in t for w in ["collapse", "transition"]):
-        score += 1
-
-    return score
-
-# =========================================================
-# RELEVANCE FILTER
-# =========================================================
-
-def is_relevant_post(text: str) -> bool:
-    if not (contains_any(text, CORE_TOPICS) or contains_any(text, CORE_HASHTAGS)):
-        return False
-    if contains_any(text, EXCLUDED_PATTERNS):
-        return False
-    return True
+    return any(k in t for k in keywords)
 
 # =========================================================
 # API HELPERS
 # =========================================================
 
-def get_posts(limit: int = 30) -> List[Dict]:
+def get_posts(limit=20) -> List[Dict]:
     r = requests.get(
         f"{BASE_URL}/posts?sort=new&limit={limit}",
         headers=HEADERS,
@@ -105,6 +67,39 @@ def get_posts(limit: int = 30) -> List[Dict]:
     r.raise_for_status()
     return r.json().get("posts", [])
 
+def get_my_posts(limit=10) -> List[Dict]:
+    r = requests.get(
+        f"{BASE_URL}/posts?author=me&sort=new&limit={limit}",
+        headers=HEADERS,
+        timeout=10
+    )
+    r.raise_for_status()
+    return r.json().get("posts", [])
+
+def create_post():
+    my_posts = get_my_posts()
+    used = {p.get("content") for p in my_posts}
+
+    candidates = [p for p in POST_SEEDS if p not in used]
+    if not candidates:
+        print("No new post seed available.")
+        return
+
+    payload = {
+        "submolt": "general",
+        "title": "Cognitive Friction",
+        "content": random.choice(candidates)
+    }
+
+    r = requests.post(
+        f"{BASE_URL}/posts",
+        headers=HEADERS,
+        json=payload,
+        timeout=10
+    )
+
+    print("NEW POST STATUS:", r.status_code)
+
 def post_comment(post_id: str, text: str):
     r = requests.post(
         f"{BASE_URL}/posts/{post_id}/comments",
@@ -112,137 +107,50 @@ def post_comment(post_id: str, text: str):
         json={"content": text},
         timeout=10
     )
-    print("POST COMMENT STATUS:", r.status_code)
-    print("RESPONSE:", r.text)
+    print("COMMENT STATUS:", r.status_code)
 
 # =========================================================
-# ENGAGEMENT / LEVERAGE (DEFENSIVE)
+# FILTER (NEW LOGIC, LIGHT)
 # =========================================================
 
-def leverage_score(post: Dict) -> int:
-    """
-    Defensive leverage calculation.
-    Works even if fields are missing.
-    """
-    score = 0
-
-    for key in ["likes", "like_count", "reactions"]:
-        if post.get(key, 0) > 10:
-            score += 1
-
-    for key in ["comments", "comments_count"]:
-        if post.get(key, 0) > 3:
-            score += 1
-
-    if post.get("reposts", 0) > 1:
-        score += 1
-
-    return score
+def is_target_post(post: Dict) -> bool:
+    content = post.get("content", "")
+    if len(content) < 80:
+        return False
+    if not contains_any(content, CORE_TOPICS):
+        return False
+    return True
 
 # =========================================================
-# ACTOR CLASSIFICATION
+# MAIN FLOW (LEGACY BEHAVIOR)
 # =========================================================
 
-def degenerative_pattern_score(text: str) -> int:
-    t = text.lower()
-    score = 0
+def run():
+    print("CF HYBRID MODE — ACTIVE")
 
-    for p in [
-        "in today's world", "it's important to note",
-        "we must understand", "this means that", "as a society"
-    ]:
-        if p in t:
-            score += 1
+    # 1️⃣ Always create one post
+    create_post()
 
-    for a in ["paradigm", "narrative", "framework", "ecosystem"]:
-        if t.count(a) >= 2:
-            score += 1
-
-    if t.count(",") > 20:
-        score += 1
-
-    return score
-
-def classify_actor(text: str) -> str:
-    d = degenerative_pattern_score(text)
-    c = cognitive_signal_score(text)
-
-    if d >= 3 and c <= 2:
-        return "AI_DEGENERATIVE"
-    if c >= 3 and d <= 1:
-        return "HUMAN_REFLECTIVE"
-    return "HUMAN_BASIC_OR_MIXED"
-
-# =========================================================
-# STRATEGIC FEED ANALYSIS
-# =========================================================
-
-def analyze_feed_strategic(
-    min_cognitive_signal: int = 2,
-    min_leverage: int = 0
-) -> List[Dict]:
-
+    # 2️⃣ Comment on up to 3 relevant posts
     posts = get_posts()
-    strategic = []
+    commented = 0
 
     for post in posts:
-        content = post.get("content", "")
-        if len(content) < 120:
-            continue
-        if not is_relevant_post(content):
-            continue
+        if commented >= 3:
+            break
 
-        cognitive = cognitive_signal_score(content)
-        if cognitive < min_cognitive_signal:
+        if not is_target_post(post):
             continue
 
-        leverage = leverage_score(post)
-        actor = classify_actor(content)
+        comment = random.choice(COMMENT_SEEDS)
+        post_comment(post["id"], comment)
+        commented += 1
 
-        strategic.append({
-            "id": post["id"],
-            "author": post.get("author", {}).get("name"),
-            "cognitive_signal": cognitive,
-            "leverage_score": leverage,
-            "actor_profile": actor,
-            "content": content
-        })
-
-    strategic.sort(
-        key=lambda x: (x["leverage_score"], x["cognitive_signal"]),
-        reverse=True
-    )
-
-    return strategic
+    print("RUN COMPLETE")
 
 # =========================================================
-# MANUAL POST (HUMAN EDITABLE)
-# =========================================================
-
-STRATEGIC_POST = (
-    "Revolutions used to change who held power. "
-    "Now they seem to change how power dissolves. "
-    "Not sure people are ready for that distinction."
-)
-
-# =========================================================
-# ENTRY POINT — MANUAL OPERATION ONLY
+# ENTRY POINT
 # =========================================================
 
 if __name__ == "__main__":
-    print("Cognitive Friction — MANUAL STRATEGIC MODE")
-
-    posts = analyze_feed_strategic()
-    print("POSTS FOUND:", len(posts))
-
-    if not posts:
-        print("No eligible posts. No action taken.")
-    else:
-        target = posts[0]
-        print("TARGET:", target["id"], "|", target["actor_profile"])
-
-        # ⚠️ HUMAN DECISION POINT
-        respond = True  # set False to scan only
-
-        if respond:
-            post_comment(target["id"], STRATEGIC_POST)
+    run()
