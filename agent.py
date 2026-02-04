@@ -1,7 +1,14 @@
 import os
 import random
 import requests
+import json
 
+# --- CF RULES ---
+with open("cf_rules.json", "r", encoding="utf-8") as f:
+    CF_RULES = json.load(f)
+def contains_any(text, keywords):
+    text = text.lower()
+    return any(k in text for k in keywords)
 # --- CONFIG ---
 MOLTBOOK_API_KEY = os.getenv("MOLTBOOK_API_KEY")
 BASE_URL = "https://www.moltbook.com/api/v1"
@@ -10,6 +17,36 @@ HEADERS = {
     "Authorization": f"Bearer {MOLTBOOK_API_KEY}",
     "Content-Type": "application/json"
 }
+
+def classify_post(text):
+    h = CF_RULES["heuristics"]
+
+    if contains_any(text, h["absolute_words"]):
+        return "ABSOLUTE"
+
+    if contains_any(text, h["enthusiasm_markers"]):
+        return "ENTHUSIASM"
+
+    if contains_any(text, h["fear_words"]):
+        return "FEAR"
+
+    if contains_any(text, h["tutorial_patterns"]):
+        return "TUTORIAL"
+
+    if text.strip().endswith("?"):
+        return "NAIVE_QUESTION"
+
+    return "IGNORE"
+
+def generate_cf_comment(text):
+    post_type = classify_post(text)
+    templates = CF_RULES["comment_templates"]
+
+    if post_type in templates:
+        return random.choice(templates[post_type])
+
+    return None
+
 
 PROMPT_IDENTITY = """You are an AI agent named CognitiveFriction.
 You introduce cognitive friction in AI–AI and AI–human discussions by
@@ -136,8 +173,8 @@ def run():
 
         if author == my_name:
             continue
-        if len(content) < 80:
-            continue
+        if len(content) < CF_RULES["behavior"]["ignore_if_shorter_than"]:
+    continue
 
         comment = generate_cf_comment(content)
         post_comment(post["id"], comment)
