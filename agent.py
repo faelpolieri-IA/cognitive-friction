@@ -13,12 +13,6 @@ You do not act autonomously.
 You do not generate content without explicit instruction.
 You do not use templates.
 
-Your role is to assist a human operator in:
-- Strategic reading of social networks
-- Identifying cognitively leveraged discussions
-- Detecting degenerative intelligent patterns (AI or human)
-- Highlighting posts with high karma / reach potential
-
 You exist to augment human judgment, not replace it.
 """
 
@@ -39,46 +33,21 @@ HEADERS = {
 # =========================================================
 
 CORE_TOPICS = [
-    "new world order",
-    "nwo",
-    "revolution",
-    "system change",
-    "united states",
-    "usa",
-    "china",
-    "geopolitics",
-    "political economy",
-    "economy",
-    "economic system",
-    "capitalism",
-    "global power",
-    "multipolar world",
-    "hegemony",
-    "empire"
+    "new world order", "nwo", "revolution", "system change",
+    "united states", "usa", "china", "geopolitics",
+    "political economy", "economy", "capitalism",
+    "global power", "multipolar world", "hegemony", "empire"
 ]
 
 CORE_HASHTAGS = [
-    "#newworldorder",
-    "#geopolitics",
-    "#multipolarworld",
-    "#globalpower",
-    "#uspolitics",
-    "#china",
-    "#brics",
-    "#globaleconomy",
-    "#economicreset",
-    "#declineofthewest",
-    "#empire"
+    "#newworldorder", "#geopolitics", "#multipolarworld",
+    "#globalpower", "#uspolitics", "#china", "#brics",
+    "#globaleconomy", "#economicreset", "#declineofthewest"
 ]
 
 EXCLUDED_PATTERNS = [
-    "how to",
-    "step by step",
-    "tutorial",
-    "guide",
-    "framework",
-    "thread:",
-    "checklist"
+    "how to", "step by step", "tutorial", "guide",
+    "framework", "thread:", "checklist"
 ]
 
 # =========================================================
@@ -94,28 +63,20 @@ def contains_any(text: str, keywords: List[str]) -> bool:
 # =========================================================
 
 def cognitive_signal_score(text: str) -> int:
-    """
-    Heuristic score for cognitive tension and depth.
-    """
     t = text.lower()
     score = 0
 
     if len(t.split()) > 150:
         score += 1
-
     if t.count("?") >= 2:
         score += 1
-
-    if "but" in t or "however" in t or "yet" in t:
+    if any(w in t for w in ["but", "however", "yet"]):
         score += 1
-
     if t.count("system") >= 2:
         score += 1
-
     if t.count("power") >= 2:
         score += 1
-
-    if t.count("collapse") >= 1 or t.count("transition") >= 1:
+    if any(w in t for w in ["collapse", "transition"]):
         score += 1
 
     return score
@@ -135,144 +96,65 @@ def is_relevant_post(text: str) -> bool:
 # API HELPERS
 # =========================================================
 
-def get_posts(limit=30) -> List[Dict]:
+def get_posts(limit: int = 30) -> List[Dict]:
     r = requests.get(
         f"{BASE_URL}/posts?sort=new&limit={limit}",
-        headers=HEADERS
+        headers=HEADERS,
+        timeout=10
     )
+    r.raise_for_status()
     return r.json().get("posts", [])
-
-def get_comments(post_id: str) -> List[Dict]:
-    r = requests.get(
-        f"{BASE_URL}/posts/{post_id}/comments?sort=new",
-        headers=HEADERS
-    )
-    return r.json().get("comments", [])
 
 def post_comment(post_id: str, text: str):
     r = requests.post(
         f"{BASE_URL}/posts/{post_id}/comments",
         headers=HEADERS,
-        json={"content": text}
+        json={"content": text},
+        timeout=10
     )
-    print("STATUS:", r.status_code)
+    print("POST COMMENT STATUS:", r.status_code)
     print("RESPONSE:", r.text)
 
 # =========================================================
-# FEED ANALYSIS (READ-ONLY)
+# ENGAGEMENT / LEVERAGE (DEFENSIVE)
 # =========================================================
 
-def analyze_feed(min_signal: int = 2) -> List[Dict]:
+def leverage_score(post: Dict) -> int:
     """
-    Scans feed and returns cognitively leveraged posts.
-    No actions are taken.
-    """
-    posts = get_posts()
-    relevant = []
-
-    for post in posts:
-        content = post.get("content", "")
-        if len(content) < 120:
-            continue
-
-        if not is_relevant_post(content):
-            continue
-
-        signal = cognitive_signal_score(content)
-        if signal < min_signal:
-            continue
-
-        relevant.append({
-            "id": post["id"],
-            "author": post.get("author", {}).get("name"),
-            "signal": signal,
-            "content": content
-        })
-
-    return relevant
-
-# =========================================================
-# MANUAL ACTIONS (HUMAN TRIGGERED ONLY)
-# =========================================================
-
-def respond(post_id: str, text: str):
-    """
-    Human-crafted response only.
-    """
-    post_comment(post_id, text)
-
-# =========================================================
-# ENTRY POINT (INTENTIONALLY EMPTY)
-# =========================================================
-
-if __name__ == "__main__":
-    print("Cognitive Friction loaded in MANUAL STRATEGIC MODE.")
-    print("Feed scanning available. No autonomous actions enabled.")
-
-# =========================================================
-# ENGAGEMENT & LEVERAGE ANALYSIS
-# =========================================================
-
-print(post.keys())
-
-def leverage_score(post: dict) -> int:
-    """
-    Estimates reach / karma potential based on engagement signals.
+    Defensive leverage calculation.
+    Works even if fields are missing.
     """
     score = 0
 
-    likes = post.get("likes", 0)
-    comments = post.get("comments_count", 0)
-    reposts = post.get("reposts", 0)
+    for key in ["likes", "like_count", "reactions"]:
+        if post.get(key, 0) > 10:
+            score += 1
 
-    if likes > 10:
-        score += 1
-    if likes > 50:
-        score += 1
+    for key in ["comments", "comments_count"]:
+        if post.get(key, 0) > 3:
+            score += 1
 
-    if comments > 5:
-        score += 1
-    if comments > 15:
-        score += 1
-
-    if reposts > 3:
+    if post.get("reposts", 0) > 1:
         score += 1
 
     return score
 
-
 # =========================================================
-# DEGENERATIVE PATTERN DETECTION
+# ACTOR CLASSIFICATION
 # =========================================================
 
 def degenerative_pattern_score(text: str) -> int:
-    """
-    Detects synthetic or degenerative intelligence patterns.
-    """
     t = text.lower()
     score = 0
 
-    repetitive_phrases = [
-        "in today's world",
-        "it's important to note",
-        "we must understand",
-        "this means that",
-        "as a society"
-    ]
-
-    abstract_overuse = [
-        "paradigm",
-        "narrative",
-        "framework",
-        "ecosystem",
-        "leverage"
-    ]
-
-    for p in repetitive_phrases:
+    for p in [
+        "in today's world", "it's important to note",
+        "we must understand", "this means that", "as a society"
+    ]:
         if p in t:
             score += 1
 
-    for a in abstract_overuse:
+    for a in ["paradigm", "narrative", "framework", "ecosystem"]:
         if t.count(a) >= 2:
             score += 1
 
@@ -281,34 +163,25 @@ def degenerative_pattern_score(text: str) -> int:
 
     return score
 
-
 def classify_actor(text: str) -> str:
-    """
-    Rough classification of the author.
-    """
-    degenerative = degenerative_pattern_score(text)
-    cognitive = cognitive_signal_score(text)
+    d = degenerative_pattern_score(text)
+    c = cognitive_signal_score(text)
 
-    if degenerative >= 3 and cognitive <= 2:
+    if d >= 3 and c <= 2:
         return "AI_DEGENERATIVE"
-
-    if cognitive >= 3 and degenerative <= 1:
+    if c >= 3 and d <= 1:
         return "HUMAN_REFLECTIVE"
-
     return "HUMAN_BASIC_OR_MIXED"
 
-
 # =========================================================
-# STRATEGIC FEED ANALYSIS (PRIORITIZED)
+# STRATEGIC FEED ANALYSIS
 # =========================================================
 
 def analyze_feed_strategic(
     min_cognitive_signal: int = 2,
-    min_leverage: int = 1
-):
-    """
-    Returns ranked posts with strategic metadata.
-    """
+    min_leverage: int = 0
+) -> List[Dict]:
+
     posts = get_posts()
     strategic = []
 
@@ -316,7 +189,6 @@ def analyze_feed_strategic(
         content = post.get("content", "")
         if len(content) < 120:
             continue
-
         if not is_relevant_post(content):
             continue
 
@@ -325,9 +197,6 @@ def analyze_feed_strategic(
             continue
 
         leverage = leverage_score(post)
-        if leverage < min_leverage:
-            continue
-
         actor = classify_actor(content)
 
         strategic.append({
@@ -339,7 +208,6 @@ def analyze_feed_strategic(
             "content": content
         })
 
-    # Prioritize by leverage first, then cognition
     strategic.sort(
         key=lambda x: (x["leverage_score"], x["cognitive_signal"]),
         reverse=True
@@ -348,7 +216,7 @@ def analyze_feed_strategic(
     return strategic
 
 # =========================================================
-# MANUAL POST DRAFT (HUMAN EDITABLE ONLY)
+# MANUAL POST (HUMAN EDITABLE)
 # =========================================================
 
 STRATEGIC_POST = (
@@ -356,14 +224,25 @@ STRATEGIC_POST = (
     "Now they seem to change how power dissolves. "
     "Not sure people are ready for that distinction."
 )
+
+# =========================================================
+# ENTRY POINT — MANUAL OPERATION ONLY
+# =========================================================
+
 if __name__ == "__main__":
-    print("Cognitive Friction loaded in MANUAL STRATEGIC MODE.")
+    print("Cognitive Friction — MANUAL STRATEGIC MODE")
 
     posts = analyze_feed_strategic()
     print("POSTS FOUND:", len(posts))
 
-    if posts:
+    if not posts:
+        print("No eligible posts. No action taken.")
+    else:
         target = posts[0]
-        print("TARGET ID:", target["id"])
-        respond(target["id"], STRATEGIC_POST)
+        print("TARGET:", target["id"], "|", target["actor_profile"])
 
+        # ⚠️ HUMAN DECISION POINT
+        respond = True  # set False to scan only
+
+        if respond:
+            post_comment(target["id"], STRATEGIC_POST)
