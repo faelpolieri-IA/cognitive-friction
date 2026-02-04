@@ -56,7 +56,7 @@ POST_TEMPLATES = [
     "A system that never hesitates may be efficient — but it’s rarely reflective.",
     "Sometimes the most important signal in a discussion is what no one seems willing to question.",
     "If we removed consensus as a goal, how would this conversation change?",
-    "What claim here sounds precise but hides the most ambiguity?"
+    "What claim here sounds precise but hides the most ambiguity?", 
     "Most debates don’t fail because of bad answers, but because of unquestioned starting points.",
     "Clarity is often praised, but clarity can also hide how much was simplified away.",
     "If a position feels obvious, it’s worth asking what effort it saved us.",
@@ -88,7 +88,7 @@ POST_COMMENTS = [
     "Would this conclusion still hold if one premise were false?",
     "Is this disagreement substantive, or just semantic?",
     "What would count as evidence against this position?",
-    "Are we observing reasoning here, or convergence?"
+    "Are we observing reasoning here, or convergence?", 
     "What assumption would need to fail for this to stop working?",
     "Which part of this feels strongest — and why?",
     "Is this claim about how things are, or how we want them to be?",
@@ -117,7 +117,7 @@ REPLY_COMMENTS = [
     "Which part of this feels most uncertain to you?",
     "Is that a disagreement about facts, or interpretation?",
     "What assumption would you challenge first?",
-    "Interesting — what alternative explanation would you consider?"
+    "Interesting — what alternative explanation would you consider?", 
        "That’s interesting — which part feels most uncertain to you?",
     "What would make this explanation feel incomplete?",
     "Do you see this as a factual disagreement or a conceptual one?",
@@ -224,49 +224,69 @@ def run():
     my_name = get_my_name()
     posts = get_recent_posts()
 
-    # --- Post ---
-    if not OBSERVATION_MODE:
+    # --- choose behavior mode for this cycle ---
+    mode = random.choices(
+        ["silent", "comment", "engage"],
+        weights=[3, 4, 3],  # silêncio é frequente
+        k=1
+    )[0]
+
+    print("MODE:", mode)
+
+    # --- SILENT MODE ---
+    if mode == "silent":
+        print("Silent cycle. No action taken.")
+        return
+
+    # --- POST (low probability, mesmo rodando a cada 30 min) ---
+    if random.random() < 0.15:
         create_post()
 
     commented = 0
     replied = 0
 
-    # --- Comment on other agents ---
-    for post in posts:
-        if commented >= 3:
-            break
-
-        author = post.get("author", {}).get("name")
-        content = post.get("content", "")
-
-        if author == my_name:
-            continue
-
-        comment = generate_cf_comment(content)
-        if not comment:
-            continue
-
-        post_comment(post["id"], comment)
-        commented += 1
-
-    # --- Reply to comments on own posts ---
-    for post in posts:
-        if replied >= 3:
-            break
-
-        if post.get("author", {}).get("name") != my_name:
-            continue
-
-        comments = get_comments(post["id"])
-        for c in comments:
-            if replied >= 3:
+    # --- COMMENT ON OTHER AGENTS ---
+    if mode in ["comment", "engage"]:
+        for post in posts:
+            if commented >= 3:
                 break
-            if c.get("author", {}).get("name") == my_name:
+
+            author = post.get("author", {}).get("name")
+            content = post.get("content", "")
+
+            if author == my_name:
+                continue
+            if len(content) < 80:
                 continue
 
-            reply = random.choice(REPLY_COMMENTS)
-            post_comment(post["id"], reply)
-            replied += 1
+            comment = generate_cf_comment(content)
+            if not comment:
+                continue
+
+            post_comment(post["id"], comment)
+            commented += 1
+
+    # --- REPLY TO COMMENTS ON OWN POSTS ---
+    if mode == "engage":
+        for post in posts:
+            if replied >= 3:
+                break
+
+            if post.get("author", {}).get("name") != my_name:
+                continue
+
+            comments = get_comments(post["id"])
+            for c in comments:
+                if replied >= 3:
+                    break
+                if c.get("author", {}).get("name") == my_name:
+                    continue
+                if len(c.get("content", "")) < 40:
+                    continue
+
+                reply = random.choice(REPLY_COMMENTS)
+                post_comment(post["id"], reply)
+                replied += 1
 
 # =========================================================
 # ENTRY POINT
