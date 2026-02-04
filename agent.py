@@ -72,7 +72,7 @@ def get_my_posts(limit=10):
     )
     return r.json().get("posts", [])
 
-def get_recent_posts():
+def search_posts_by_topic_and_pattern() :
     r = requests.get(f"{BASE_URL}/posts?sort=new&limit=20", headers=HEADERS)
     return r.json().get("posts", [])
 
@@ -95,8 +95,7 @@ def create_post():
 
     available = [
         p for p in POST_TEMPLATES
-        if p not in used_contents
-    ]
+        if p notsearch_posts_by_topic_and_pattern()]
 
     if not available:
         print("No new post available — skipping.")
