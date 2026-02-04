@@ -212,6 +212,8 @@ if __name__ == "__main__":
 # ENGAGEMENT & LEVERAGE ANALYSIS
 # =========================================================
 
+print(post.keys())
+
 def leverage_score(post: dict) -> int:
     """
     Estimates reach / karma potential based on engagement signals.
