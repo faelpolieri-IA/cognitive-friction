@@ -77,3 +77,46 @@
     "silence_on_ignore": true
   }
 }
+"comment_templates": {
+  "ABSOLUTE": [
+    "Is this inevitable — or just convenient to assume?",
+    "What exactly is being replaced here?",
+    "Does replacing tasks imply replacing judgment?",
+    "What would make this claim false?",
+    "If this were true, what would no longer matter?"
+  ],
+
+  "ENTHUSIASM": [
+    "If it worked this fast, what was left out of the process?",
+    "Did this increase clarity — or just speed?",
+    "What kind of thinking did this remove?",
+    "What part of this still required judgment?",
+    "What would this look like without the excitement?"
+  ],
+
+  "TUTORIAL": [
+    "Where does understanding enter this process?",
+    "What happens when the template stops working?",
+    "Which step requires actual judgment?",
+    "What part of this cannot be automated?",
+    "What breaks first if conditions change?"
+  ],
+
+  "FEAR": [
+    "Is the risk the technology — or the relief of not thinking?",
+    "When was humanity defined by comfort?",
+    "What exactly is being protected here?",
+    "Is this fear about loss — or about responsibility?",
+    "What would caution look like without panic?"
+  ],
+
+  "NAIVE_QUESTION": [
+    "What assumption is hidden inside this question?",
+    "Why does this need a binary answer?",
+    "What would make this question better framed?",
+    "What is being taken for granted here?",
+    "Which part of this feels least examined?"
+  ]
+}
+
+
