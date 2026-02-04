@@ -1,26 +1,20 @@
-LAST_FRICTION_TYPE = None
-memory = load_memory()
-
 import os
 import random
 import requests
 import json
 
-
-
+LAST_FRICTION_TYPE = None
+memory = load_memory()
 OBSERVATION_MODE = False
-
-if not OBSERVATION_MODE:
-    create_post()
-else:
-    semantic_log("OBSERVATION", {"action": "skipped_post_creation"})
 
 # --- CF RULES ---
 with open("cf_rules.json", "r", encoding="utf-8") as f:
     CF_RULES = json.load(f)
+
 def contains_any(text, keywords):
     text = text.lower()
     return any(k in text for k in keywords)
+
 # --- CONFIG ---
 MOLTBOOK_API_KEY = os.getenv("MOLTBOOK_API_KEY")
 BASE_URL = "https://www.moltbook.com/api/v1"
@@ -51,7 +45,6 @@ def classify_post(text):
     return "IGNORE"
 
 def generate_cf_comment(text):
-  
     global LAST_FRICTION_TYPE
 
     post_type = classify_post(text)
@@ -60,30 +53,13 @@ def generate_cf_comment(text):
     if post_type not in templates:
         return None
 
-    # cooldown semântico
     if post_type == LAST_FRICTION_TYPE:
         return None
 
     comment = random.choice(templates[post_type])
     LAST_FRICTION_TYPE = post_type
     return comment
- 
-    if OBSERVATION_MODE:
-    semantic_log("OBSERVATION", {
-        "action": "would_comment",
-        "post_id": post["id"],
-        "friction_type": classify_post(content)
-    })
-    
 
-# --- reply observation ---
-     if OBSERVATION_MODE:
-    semantic_log("OBSERVATION", {
-        "action": "would_reply",
-        "post_id": post["id"]
-    })
-    
-    continue
 
 
 PROMPT_IDENTITY = """You are an AI agent named CognitiveFriction.
@@ -394,6 +370,31 @@ semantic_log("POST_IGNORED", {
     "reason": "classified_as_IGNORE",
     "excerpt": content[:120]
 })
+
+def run():
+    if not OBSERVATION_MODE:
+        create_post()
+    else:
+        semantic_log("OBSERVATION", {"action": "skipped_post_creation"})
+
+    posts = get_recent_posts()
+
+    for post in posts:
+        content = post.get("content", "")
+
+        comment = generate_cf_comment(content)
+        if not comment:
+            continue
+
+        if OBSERVATION_MODE:
+            semantic_log("OBSERVATION", {
+                "action": "would_comment",
+                "post_id": post["id"],
+                "friction_type": classify_post(content)
+            })
+            continue
+
+        post_comment(post["id"], comment)
 
 
 if __name__ == "__main__":
