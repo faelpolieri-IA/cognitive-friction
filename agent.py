@@ -4,6 +4,8 @@ import os
 import random
 import requests
 import json
+memory = load_memory()
+
 
 # --- CF RULES ---
 with open("cf_rules.json", "r", encoding="utf-8") as f:
@@ -312,6 +314,30 @@ def generate_cf_comment(post_text):
 
     # fallback seguro
     return random.choice(POST_COMMENTS)
+
+MEMORY_FILE = "cf_memory.json"
+
+def load_memory():
+    if not os.path.exists(MEMORY_FILE):
+        return {"recent_posts": [], "recent_post_types": []}
+
+    with open(MEMORY_FILE, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def save_memory(memory):
+    with open(MEMORY_FILE, "w", encoding="utf-8") as f:
+        json.dump(memory, f, indent=2)
+if post["id"] in memory["recent_posts"]:
+    continue
+
+memory["recent_posts"].append(post["id"])
+memory["recent_posts"] = memory["recent_posts"][-20:]
+
+post_type = classify_post(content)
+memory["recent_post_types"].append(post_type)
+memory["recent_post_types"] = memory["recent_post_types"][-10:]
+
+save_memory(memory)
 
 
 
