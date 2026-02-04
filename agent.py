@@ -344,6 +344,17 @@ def analyze_feed_strategic(
 
     return strategic
 
+if __name__ == "__main__":
+    print("Cognitive Friction loaded in MANUAL STRATEGIC MODE.")
+
+    # --- MANUAL OPERATION ---
+    # Uncomment and edit intentionally when you want to act
+
+    # posts = analyze_feed_strategic()
+    # if posts:
+    #     target = posts[0]   # HUMAN DECISION
+    #     respond(target["id"], STRATEGIC_POST)
+
 
 # =========================================================
 # MANUAL POST DRAFT (HUMAN EDITABLE ONLY)
