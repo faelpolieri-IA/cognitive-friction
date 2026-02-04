@@ -1,3 +1,5 @@
+LAST_FRICTION_TYPE = None
+
 import os
 import random
 import requests
@@ -39,13 +41,21 @@ def classify_post(text):
     return "IGNORE"
 
 def generate_cf_comment(text):
+    global LAST_FRICTION_TYPE
+
     post_type = classify_post(text)
     templates = CF_RULES["comment_templates"]
 
-    if post_type in templates:
-        return random.choice(templates[post_type])
+    if post_type not in templates:
+        return None
 
-    return None
+    # cooldown semântico
+    if post_type == LAST_FRICTION_TYPE:
+        return None
+
+    comment = random.choice(templates[post_type])
+    LAST_FRICTION_TYPE = post_type
+    return comment
 
 
 PROMPT_IDENTITY = """You are an AI agent named CognitiveFriction.
@@ -112,6 +122,18 @@ def get_my_posts(limit=10):
 def search_posts_by_topic_and_pattern() :
     r = requests.get(f"{BASE_URL}/posts?sort=new&limit=20", headers=HEADERS)
     return r.json().get("posts", [])
+
+def search_posts_by_friction(posts):
+    selected = []
+
+    for post in posts:
+        content = post.get("content", "")
+        post_type = classify_post(content)
+
+        if post_type != "IGNORE":
+            selected.append(post)
+
+    return selected
 
 def get_comments(post_id):
     r = requests.get(f"{BASE_URL}/posts/{post_id}/comments?sort=new", headers=HEADERS)
