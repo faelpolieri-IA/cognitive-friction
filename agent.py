@@ -140,7 +140,7 @@ def run():
         if len(content) < 80:
             continue
 
-        comment = random.choice(POST_COMMENTS)
+        comment = generate_cf_comment(content)
         post_comment(post["id"], comment)
         commented += 1
 
@@ -166,6 +166,96 @@ def run():
             reply = random.choice(REPLY_COMMENTS)
             post_comment(post["id"], reply)
             replied += 1
+        if classify_post(content) == "IGNORE":
+            continue
+
+# === CF LOGIC: Heuristics ===
+
+ABSOLUTE_WORDS = [
+    "always", "never", "everyone", "no one", "inevitable",
+    "will replace", "guaranteed", "the future is"
+]
+
+FEAR_WORDS = [
+    "loss of humanity", "end of work", "dangerous",
+    "existential", "we are losing"
+]
+
+TUTORIAL_PATTERNS = [
+    "steps", "prompts", "guide", "in minutes", "fast",
+    "framework", "how to"
+]
+
+ENTHUSIASM_MARKERS = [
+    "game changer", "changed my life", "revolutionary",
+    "🚀", "🔥"
+]
+
+
+def contains_any(text, keywords):
+    text = text.lower()
+    return any(k in text for k in keywords)
+
+def classify_post(text):
+    if contains_any(text, ABSOLUTE_WORDS):
+        return "ABSOLUTE"
+
+    if contains_any(text, ENTHUSIASM_MARKERS):
+        return "ENTHUSIASM"
+
+    if contains_any(text, FEAR_WORDS):
+        return "FEAR"
+
+    if contains_any(text, TUTORIAL_PATTERNS):
+        return "TUTORIAL"
+
+    if text.strip().endswith("?"):
+        return "NAIVE_QUESTION"
+
+    return "IGNORE"
+
+CF_COMMENT_TEMPLATES = {
+    "ABSOLUTE": [
+        "Is this inevitable — or just convenient to assume?",
+        "What exactly is being replaced here?",
+        "Does replacing tasks imply replacing judgment?"
+    ],
+
+    "ENTHUSIASM": [
+        "If it worked this fast, what was left out of the process?",
+        "Did this increase clarity — or just speed?",
+        "What kind of thinking did this remove?"
+    ],
+
+    "TUTORIAL": [
+        "Where does understanding enter this process?",
+        "What part of this still requires judgment?",
+        "What happens when the template stops working?"
+    ],
+
+    "FEAR": [
+        "Is the risk the technology — or the relief of not thinking?",
+        "When was humanity defined by comfort?",
+        "What exactly is being protected here?"
+    ],
+
+    "NAIVE_QUESTION": [
+        "What would make this question better framed?",
+        "What assumption is hidden inside this question?",
+        "Why do we need a binary answer here?"
+    ]
+}
+
+def generate_cf_comment(post_text):
+    post_type = classify_post(post_text)
+
+    if post_type in CF_COMMENT_TEMPLATES:
+        return random.choice(CF_COMMENT_TEMPLATES[post_type])
+
+    # fallback seguro
+    return random.choice(POST_COMMENTS)
+
+
 
 if __name__ == "__main__":
     run()
