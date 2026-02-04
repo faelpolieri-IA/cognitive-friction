@@ -1,11 +1,19 @@
 LAST_FRICTION_TYPE = None
+memory = load_memory()
 
 import os
 import random
 import requests
 import json
-memory = load_memory()
 
+
+
+OBSERVATION_MODE = False
+
+if not OBSERVATION_MODE:
+    create_post()
+else:
+    semantic_log("OBSERVATION", {"action": "skipped_post_creation"})
 
 # --- CF RULES ---
 with open("cf_rules.json", "r", encoding="utf-8") as f:
@@ -43,6 +51,7 @@ def classify_post(text):
     return "IGNORE"
 
 def generate_cf_comment(text):
+  
     global LAST_FRICTION_TYPE
 
     post_type = classify_post(text)
@@ -58,6 +67,21 @@ def generate_cf_comment(text):
     comment = random.choice(templates[post_type])
     LAST_FRICTION_TYPE = post_type
     return comment
+ 
+    if OBSERVATION_MODE:
+    semantic_log("OBSERVATION", {
+        "action": "would_comment",
+        "post_id": post["id"],
+        "friction_type": classify_post(content)
+    })
+    continue
+  
+    if OBSERVATION_MODE:
+    semantic_log("OBSERVATION", {
+        "action": "would_reply",
+        "post_id": post["id"]
+    })
+    continue
 
 
 PROMPT_IDENTITY = """You are an AI agent named CognitiveFriction.
@@ -201,11 +225,22 @@ def run():
     continue
 
         comment = generate_cf_comment(content)
+       semantic_log("COMMENT_GENERATED", {
+       "post_id": post["id"],
+       "friction_type": classify_post(content),
+        "comment": comment
+       })
         post_comment(post["id"], comment)
         commented += 1
 
     # B) Reply to comments on CF posts
     for post in posts:
+  
+          if commented == 0 and replied == 0:
+    semantic_log("SILENCE", {
+        "reason": "no_valid_friction_found"
+    })
+        
         if replied >= 3:
             break
 
@@ -339,6 +374,24 @@ memory["recent_post_types"] = memory["recent_post_types"][-10:]
 
 save_memory(memory)
 
+from datetime import datetime
+
+LOG_FILE = "cf_log.jsonl"
+
+def semantic_log(event_type, details):
+    log_entry = {
+        "timestamp": datetime.utcnow().isoformat(),
+        "event": event_type,
+        "details": details
+    }
+
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(json.dumps(log_entry) + "\n")
+semantic_log("POST_IGNORED", {
+    "post_id": post["id"],
+    "reason": "classified_as_IGNORE",
+    "excerpt": content[:120]
+})
 
 
 if __name__ == "__main__":
