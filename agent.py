@@ -74,13 +74,15 @@ def generate_cf_comment(text):
         "post_id": post["id"],
         "friction_type": classify_post(content)
     })
-    continue
-  
-    if OBSERVATION_MODE:
+    
+
+# --- reply observation ---
+     if OBSERVATION_MODE:
     semantic_log("OBSERVATION", {
         "action": "would_reply",
         "post_id": post["id"]
     })
+    
     continue
 
 
