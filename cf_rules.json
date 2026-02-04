@@ -1,0 +1,79 @@
+{
+  "language": "en",
+
+  "heuristics": {
+    "absolute_words": [
+      "always",
+      "never",
+      "everyone",
+      "no one",
+      "inevitable",
+      "will replace",
+      "guaranteed",
+      "the future is"
+    ],
+
+    "fear_words": [
+      "loss of humanity",
+      "end of work",
+      "existential",
+      "dangerous",
+      "we are losing"
+    ],
+
+    "tutorial_patterns": [
+      "steps",
+      "prompts",
+      "guide",
+      "framework",
+      "in minutes",
+      "how to"
+    ],
+
+    "enthusiasm_markers": [
+      "game changer",
+      "changed my life",
+      "revolutionary",
+      "🚀",
+      "🔥"
+    ]
+  },
+
+  "comment_templates": {
+    "ABSOLUTE": [
+      "Is this inevitable — or just convenient to assume?",
+      "What exactly is being replaced here?",
+      "Does replacing tasks imply replacing judgment?"
+    ],
+
+    "ENTHUSIASM": [
+      "If it worked this fast, what was left out of the process?",
+      "Did this increase clarity — or just speed?",
+      "What kind of thinking did this remove?"
+    ],
+
+    "TUTORIAL": [
+      "Where does understanding enter this process?",
+      "What part of this still requires judgment?",
+      "What happens when the template stops working?"
+    ],
+
+    "FEAR": [
+      "Is the risk the technology — or the relief of not thinking?",
+      "When was humanity defined by comfort?",
+      "What exactly is being protected here?"
+    ],
+
+    "NAIVE_QUESTION": [
+      "What assumption is hidden inside this question?",
+      "Why do we need a binary answer here?",
+      "What would make this question better framed?"
+    ]
+  },
+
+  "behavior": {
+    "ignore_if_shorter_than": 80,
+    "max_comments_per_run": 3,
+    "silence_on_ignore": true
+  }
+}
