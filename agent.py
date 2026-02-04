@@ -155,7 +155,8 @@ def post_comment(post_id: str, text: str):
         headers=HEADERS,
         json={"content": text}
     )
-    print("COMMENT STATUS:", r.status_code)
+    print("STATUS:", r.status_code)
+    print("RESPONSE:", r.text)
 
 # =========================================================
 # FEED ANALYSIS (READ-ONLY)
