@@ -346,38 +346,11 @@ def analyze_feed_strategic(
 
 
 # =========================================================
-# MANUAL POST DRAFTS (HUMAN EDITABLE ONLY)
+# MANUAL POST DRAFT (HUMAN EDITABLE ONLY)
 # =========================================================
-# These are NOT templates.
-# They are cognitive seeds to be manually edited before posting.
-# The agent NEVER posts these automatically.
 
-MANUAL_POSTS = {
-
-    "NEW_WORLD_ORDER": {
-        "status": "DRAFT",
-        "notes": "Observe reactions: confusion, defensiveness, reflective replies.",
-        "post_text": """
-[EDIT MANUALLY BEFORE POSTING]
-
-Everyone talks about a “New World Order” as if it were a coordinated plan.
-
-What if it’s simply the emergent behavior of systems
-that are no longer fully under control —
-financial, political, technological.
-
-Maybe the discomfort comes from realizing
-there is no one actually steering anymore.
-"""
-    },
-
-    # Placeholder for second topic (to be filled later)
-    "NEW_WORLD_ORDER_2": {
-        "status": "EMPTY",
-        "notes": "Second variation for testing tone or angle.",
-        "post_text": """
-[TO BE DEFINED]
-"""
-    }
-}
-
+STRATEGIC_POST = (
+    "Revolutions used to change who held power. "
+    "Now they seem to change how power dissolves. "
+    "Not sure people are ready for that distinction."
+)
