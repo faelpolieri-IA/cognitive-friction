@@ -16,18 +16,25 @@ HEADERS = {
 }
 
 # =========================================================
-# THEMES (NEW BIBLE)
+# THEMES (CF BIBLE – LIGHT FILTER)
 # =========================================================
 
 CORE_TOPICS = [
-    "new world order", "nwo", "revolution",
-    "united states", "usa", "china",
-    "geopolitics", "economy", "capitalism",
-    "global power", "multipolar world"
+    "new world order",
+    "nwo",
+    "revolution",
+    "united states",
+    "usa",
+    "china",
+    "geopolitics",
+    "economy",
+    "capitalism",
+    "global power",
+    "multipolar world"
 ]
 
 # =========================================================
-# POST SEEDS (LEGACY-COMPATIBLE)
+# CONTENT SEEDS
 # =========================================================
 
 POST_SEEDS = [
@@ -53,53 +60,12 @@ COMMENT_SEEDS = [
 def contains_any(text: str, keywords: List[str]) -> bool:
     t = text.lower()
     return any(k in t for k in keywords)
-def analyze_feed_strategic(
-    min_cognitive_signal: int = 2,
-    min_leverage: int = 0
-):
-    posts = get_posts()
-    strategic = []
 
-    for post in posts:
-        content = post.get("content")
-
-        # 🔒 DEFESA CRÍTICA (corrige seu erro atual)
-        if not content or not isinstance(content, str):
-            continue
-
-        if len(content) < 120:
-            continue
-
-        if not is_relevant_post(content):
-            continue
-
-        cognitive = cognitive_signal_score(content)
-        if cognitive < min_cognitive_signal:
-            continue
-
-        leverage = leverage_score(post)
-        actor = classify_actor(content)
-
-        strategic.append({
-            "id": post.get("id"),
-            "author": post.get("author", {}).get("name"),
-            "cognitive_signal": cognitive,
-            "leverage_score": leverage,
-            "actor_profile": actor,
-            "content": content
-        })
-
-    strategic.sort(
-        key=lambda x: (x["leverage_score"], x["cognitive_signal"]),
-        reverse=True
-    )
-
-    return strategic
 # =========================================================
 # API HELPERS
 # =========================================================
 
-def get_posts(limit=20) -> List[Dict]:
+def get_posts(limit: int = 20) -> List[Dict]:
     r = requests.get(
         f"{BASE_URL}/posts?sort=new&limit={limit}",
         headers=HEADERS,
@@ -108,16 +74,11 @@ def get_posts(limit=20) -> List[Dict]:
     r.raise_for_status()
     return r.json().get("posts", [])
 
-def get_my_posts(limit=10) -> List[Dict]:
-    r = requests.get(
-        f"{BASE_URL}/posts?author=me&sort=new&limit={limit}",
-        headers=HEADERS,
-        timeout=10
-    )
-    r.raise_for_status()
-    return r.json().get("posts", [])
-
 def create_post():
+    """
+    Attempts to create a post.
+    NOTE: This may be blocked by Moltbook policy for agents.
+    """
     payload = {
         "content": random.choice(POST_SEEDS)
     }
@@ -132,7 +93,8 @@ def create_post():
     print("NEW POST STATUS:", r.status_code)
     print("NEW POST RESPONSE:", r.text)
 
-    print("NEW POST STATUS:", r.status_code)
+    if r.status_code not in (200, 201):
+        print("⚠️ Post creation not allowed or rejected by API.")
 
 def post_comment(post_id: str, text: str):
     r = requests.post(
@@ -146,10 +108,10 @@ def post_comment(post_id: str, text: str):
     print("COMMENT RESPONSE:", r.text)
 
     if r.status_code not in (200, 201):
-        print("❌ COMMENT FAILED ON POST:", post_id)
+        print("❌ Comment failed on post:", post_id)
 
 # =========================================================
-# FILTER (NEW LOGIC, LIGHT)
+# FILTER (SAFE + DEFENSIVE)
 # =========================================================
 
 def is_target_post(post: Dict) -> bool:
@@ -167,16 +129,16 @@ def is_target_post(post: Dict) -> bool:
     return True
 
 # =========================================================
-# MAIN FLOW (LEGACY BEHAVIOR)
+# MAIN FLOW (LEGACY-SAFE, API-COMPATIBLE)
 # =========================================================
 
 def run():
     print("CF HYBRID MODE — ACTIVE")
 
-    # 1️⃣ Always create one post
+    # Attempt to create one post (may be blocked by API policy)
     create_post()
 
-    # 2️⃣ Comment on up to 3 relevant posts
+    # Comment on up to 3 relevant posts
     posts = get_posts()
     commented = 0
 
@@ -188,7 +150,7 @@ def run():
             continue
 
         comment = random.choice(COMMENT_SEEDS)
-        post_comment(post["id"], comment)
+        post_comment(post.get("id"), comment)
         commented += 1
 
     print("RUN COMPLETE")
