@@ -119,7 +119,7 @@ def get_my_posts(limit=10) -> List[Dict]:
 
 def create_post():
     my_posts = get_my_posts()
-    used = {p.get("content") for p in my_posts}
+    used = {p.get("content") for p in my_posts if p.get("content")}
 
     candidates = [p for p in POST_SEEDS if p not in used]
     if not candidates:
@@ -140,6 +140,12 @@ def create_post():
     )
 
     print("NEW POST STATUS:", r.status_code)
+    print("NEW POST RESPONSE:", r.text)
+
+    if r.status_code not in (200, 201):
+        print("❌ POST NOT CREATED")
+
+    print("NEW POST STATUS:", r.status_code)
 
 def post_comment(post_id: str, text: str):
     r = requests.post(
@@ -148,18 +154,29 @@ def post_comment(post_id: str, text: str):
         json={"content": text},
         timeout=10
     )
+
     print("COMMENT STATUS:", r.status_code)
+    print("COMMENT RESPONSE:", r.text)
+
+    if r.status_code not in (200, 201):
+        print("❌ COMMENT FAILED ON POST:", post_id)
 
 # =========================================================
 # FILTER (NEW LOGIC, LIGHT)
 # =========================================================
 
 def is_target_post(post: Dict) -> bool:
-    content = post.get("content", "")
+    content = post.get("content")
+
+    if not content or not isinstance(content, str):
+        return False
+
     if len(content) < 80:
         return False
+
     if not contains_any(content, CORE_TOPICS):
         return False
+
     return True
 
 # =========================================================
