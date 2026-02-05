@@ -53,7 +53,48 @@ COMMENT_SEEDS = [
 def contains_any(text: str, keywords: List[str]) -> bool:
     t = text.lower()
     return any(k in t for k in keywords)
+def analyze_feed_strategic(
+    min_cognitive_signal: int = 2,
+    min_leverage: int = 0
+):
+    posts = get_posts()
+    strategic = []
 
+    for post in posts:
+        content = post.get("content")
+
+        # 🔒 DEFESA CRÍTICA (corrige seu erro atual)
+        if not content or not isinstance(content, str):
+            continue
+
+        if len(content) < 120:
+            continue
+
+        if not is_relevant_post(content):
+            continue
+
+        cognitive = cognitive_signal_score(content)
+        if cognitive < min_cognitive_signal:
+            continue
+
+        leverage = leverage_score(post)
+        actor = classify_actor(content)
+
+        strategic.append({
+            "id": post.get("id"),
+            "author": post.get("author", {}).get("name"),
+            "cognitive_signal": cognitive,
+            "leverage_score": leverage,
+            "actor_profile": actor,
+            "content": content
+        })
+
+    strategic.sort(
+        key=lambda x: (x["leverage_score"], x["cognitive_signal"]),
+        reverse=True
+    )
+
+    return strategic
 # =========================================================
 # API HELPERS
 # =========================================================
