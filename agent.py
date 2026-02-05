@@ -118,18 +118,8 @@ def get_my_posts(limit=10) -> List[Dict]:
     return r.json().get("posts", [])
 
 def create_post():
-    my_posts = get_my_posts()
-    used = {p.get("content") for p in my_posts if p.get("content")}
-
-    candidates = [p for p in POST_SEEDS if p not in used]
-    if not candidates:
-        print("No new post seed available.")
-        return
-
     payload = {
-        "submolt": "general",
-        "title": "Cognitive Friction",
-        "content": random.choice(candidates)
+        "content": random.choice(POST_SEEDS)
     }
 
     r = requests.post(
@@ -141,9 +131,6 @@ def create_post():
 
     print("NEW POST STATUS:", r.status_code)
     print("NEW POST RESPONSE:", r.text)
-
-    if r.status_code not in (200, 201):
-        print("❌ POST NOT CREATED")
 
     print("NEW POST STATUS:", r.status_code)
 
